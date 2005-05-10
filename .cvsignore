@@ -1,0 +1,17 @@
+*~
+.*~
+*.o
+*.a
+*.so
+*.bs
+*.html
+*.old
+HMM.xs
+HMM.c
+HMM.pm
+pm_to_blib
+blib
+Makefile
+pdl-core
+xs-cookbook
+META.yml

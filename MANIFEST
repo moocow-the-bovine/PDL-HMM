@@ -1,0 +1,15 @@
+MANIFEST
+MANIFEST.SKIP
+Makefile.PL
+HMM.pd
+HMM.pm
+HMM.xs
+HMM.c
+README.txt
+t/common.plt
+t/00_basic.t
+t/01_logarith.t
+t/02_txtprob.t
+t/03_baum.t
+t/04_viterbi.t
+META.yml                                 Module meta-data (added by MakeMaker)
