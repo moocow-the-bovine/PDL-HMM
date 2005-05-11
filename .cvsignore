@@ -6,6 +6,7 @@
 *.bs
 *.html
 *.old
+README.txt
 HMM.xs
 HMM.c
 HMM.pm
