@@ -14,10 +14,13 @@ BEGIN { plan tests=>11, todo=>[]; }
 
 ##-- test model 1:
 sub testmodel1 {
-  $a = pdl(double, [[.5,.5],[.5,.5]])->log;
-  $b = pdl(double, [[1,0],[0,1]])->log;
   $pi = pdl(double, [.5,.5])->log;
-  $omega = pdl(double, [.5,.5])->log;
+
+  $a = pdl(double,    [[.4,.4],
+		       [.4,.4]])->log;
+  $omega = pdl(double, [.2,.2])->log;
+
+  $b = pdl(double, [[1,0],[0,1]])->log;
 }
 
 sub emreset {
@@ -64,7 +67,7 @@ sub wantmodel1 {
 	 (map { pdl([1,0]) } (1..2)));
 
   ##-- model 2: want: text-prob
-  $etp_want = pdl(double, log(1/8));
+  $etp_want = pdl(double, log(1/25));
 
   ##-- test: want: a
   $ea_want = pdl(double, [[0,2], [4,0]])->log;
@@ -73,14 +76,18 @@ sub wantmodel1 {
   $eomega_want = pdl(double, [2,4])->log;
 
   ##-- model 2: want: etphat
-  $etphat_want  = pdl(double, log(1/3));
-  $etpdiff_want = pdl(double, log(5/24));
+  $etphat_want  = pdl(double, log(.209876));
+  $etpdiff_want = pdl(double, log(exp($etp_want)-exp($etphat_want)));
 
   ##-- model 2: want: maximized
-  $ahat_want  = pdl(double, [[0,1],[0,1]])->log;
-  $bhat_want  = pdl(double, [[1,0],[0,1]])->log;
-  $pihat_want = pdl(double, [2/3,1/3])->log;
+  $ahat_want  = pdl(double,   [[0,  1],
+			       [2/3,1/3]])->log;
   $omegahat_want = pdl(double, [1/3,2/3])->log;
+
+  $bhat_want  = pdl(double, [[1,0],[0,1]])->log;
+
+  $pihat_want = pdl(double, [2/3,1/3])->log;
+
 }
 
 ##-- tests: model 1

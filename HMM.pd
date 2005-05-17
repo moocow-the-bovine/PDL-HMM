@@ -4,7 +4,7 @@
 ## Header Administrivia
 ##======================================================================
 
-our $VERSION = '0.02';
+our $VERSION = '0.04';
 pp_setversion($VERSION);
 
 ##------------------------------------------------------
@@ -58,7 +58,7 @@ PDL::HMM - Hidden Markov Model utilities in PDL
 
  hmmexpect($a,$b,$pi,$omega, $o,$alpha,$beta, $ea,$eb,$epi);  ##-- expect
 
- ($a,$b,$pi) = hmmmaximize($ea,$eb,$epi);                     ##-- maximize
+ ($a,$b,$pi,$omega) = hmmmaximize($ea,$eb,$epi,$eomega);      ##-- maximize
 
  ##-----------------------------------------------------
  ## Sequence Analysis
@@ -107,21 +107,22 @@ pp_addhdr(<<'EOH');
 #define LOG_ZERO  -1E+38
 #define LOG_ONE    0
 #define LOG_NONE   1
-double logadd(double x, double y) {
+double logadd1(double x, double y) {
   if      (y-x > LOG_BIG) return y;
   else if (x-y > LOG_BIG) return x;
   /*else        return min(x,y) + log(exp(x-min(x,y)) + exp(y-min(x,y))); */
   else if (x<y) return x        + log( 1              + exp(y-x));
   else          return y        + log(exp(x-y)        + 1);
 }
-//#define logadd(x,y) log(exp(x)+exp(y))
-
+double logadd0(double x, double y) {
+  return log(exp(x)+exp(y));
+}
 
 /* logdiff(x,y) = log(exp(x)-exp(y))
  *   + adapted from above
  *   + always returns positive (i.e. symmetric difference)
  */
-double logdiff(double x, double y) {
+double logdiff1(double x, double y) {
   if      (y-x > LOG_BIG) { return y; }
   else if (x-y > LOG_BIG) { return x; }
   /*else        { return max(x,y) + log(exp(max(x,y)-max(x,y)) - exp(min(x,y)-max(x,y))); } */
@@ -129,6 +130,17 @@ double logdiff(double x, double y) {
   else if (x>y) { return x        + log( 1 - exp(y-x)); }
   else          { return y        + log( 1 - exp(x-y)); }
 }
+double logdiff0(double x, double y) {
+  return log(x>y ? (exp(x)-exp(y)) : (exp(y)-exp(x)));
+}
+
+/*
+#define logadd(x,y) logadd0(x,y)
+#define logdiff(x,y) logdiff0(x,y)
+*/
+
+#define logadd(x,y) logadd1(x,y)
+#define logdiff(x,y) logdiff1(x,y)
 
 EOH
 
@@ -394,13 +406,15 @@ sub hmmexpect0 {
   return ($ea,$eb,$epi,$eomega);
 }
 
+
 EOPM
 
 pp_add_exported('', 'hmmexpect0');
 
 
+
 ##------------------------------------------------------
-## Partial re-estimation
+## Partial re-estimation (OLD)
 pp_def
 ('hmmexpect',
  Pars => join(" ",
@@ -411,11 +425,10 @@ pp_def
 		 o(T);
 		 alpha(N,T);
 		 beta(N,T);),
-	      #qw([t]gamma_tp1(N);), ##-- (N) : gamma(N=>i, T=>(t+1))
 	      qw([o]ea(N,N);
 		 [o]eb(N,M);
 		 [o]epi(N);
-		 [o]eomega(N))),
+		 [o]eomega(N);)),
  Code =>
 ('
  int i,j,t;
@@ -427,6 +440,7 @@ pp_def
  /*-- Initialize: t==(T-1): P(o|@theta) --*/
  t = $SIZE(T)-1;
  loop (N) %{ p_o = logadd(p_o, $omega() + $alpha(T=>t)); %}
+
 
  /*-- Initialize: t==(T-1): Iterate: state_t==i: get gamma(i,t) --*/
  o_t = $o(T=>t);
@@ -498,10 +512,12 @@ sub hmmmaximize {
   $pihat = zeroes($epi->type, $epi->dims) if (!defined($pihat));
   $omegahat = zeroes($eomega->type, $eomega->dims) if (!defined($omegahat));
 
-  $ahat  .= $ea  - $ea->xchg(0,1)->logsumover;
+  my $easumover = $ea->xchg(0,1)->logsumover->inplace->logadd($eomega);
+
+  $ahat  .= $ea  - $easumover;
   $bhat  .= $eb  - $eb->xchg(0,1)->logsumover;
   $pihat .= $epi - $epi->logsumover;
-  $omegahat .= $eomega - $eomega->logsumover;
+  $omegahat .= $eomega - $easumover;
 
   return ($ahat,$bhat,$pihat,$omegahat);
 }
@@ -619,7 +635,7 @@ pp_def
 .'
 '),
   Doc =>
-  ('Computes Viterbi algorithm trellises $delta() and $gamma() for the
+  ('Computes Viterbi algorithm trellises $delta() and $psi() for the
 observation sequence $o() given the model parameters @theta = ($a,$b,$pi,$omega).
 
 Outputs:

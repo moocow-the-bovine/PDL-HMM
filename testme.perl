@@ -66,24 +66,38 @@ sub model1 {
   $k = 2;
 
   ##-- a
-  $ap = zeroes(double, $n,$n);
-  $ap->slice("(0)") .= pdl([1,1]);    ## p(0-->0)=.5 ; p(0-->1)=.5
-  $ap->slice("(1)") .= pdl([1,1]);    ## p(1-->0)=.5 ; p(1-->1)=.5
-  $a = log(normpdl($ap));
+  $af = zeroes(double, $n,$n);
+  $af->slice("(0)") .= pdl([2,2]);    ## p(0-->0)=.5 ; p(0-->1)=.5
+  $af->slice("(1)") .= pdl([2,2]);    ## p(1-->0)=.5 ; p(1-->1)=.5
 
   ##-- b
-  $bp = zeroes(double, $n,$k);
-  $bp->slice("(0)") .= pdl([1,0]);    ## p(0 @ 0)=.75 ; p(1 @ 0)=0   ; p(2 @ 0)=.25
-  $bp->slice("(1)") .= pdl([0,1]);    ## p(0 @ 1)=0   ; p(1 @ 1)=.75 ; p(2 @ 1)=.25
-  $b = log(normpdl($bp));
+  $bf = zeroes(double, $n,$k);
+  $bf->slice("(0)") .= pdl([1,0]);    ## p(0 @ 0)=.75 ; p(1 @ 0)=0   ; p(2 @ 0)=.25
+  $bf->slice("(1)") .= pdl([0,1]);    ## p(0 @ 1)=0   ; p(1 @ 1)=.75 ; p(2 @ 1)=.25
+  $b = log(normpdl($bf));
+  $bp = $b->exp;
 
   ##-- pi
-  $pip = pdl(double,[.5,.5]);         ## initial probability: uniform
-  $pi = log($pip/$pip->sum);
+  $pif = pdl(double,[1,1]);         ## initial probability: uniform
+  $pi = log($pif/$pif->sum);
+  $pip = $pi->exp;
 
   ##-- omega
-  $omegap = pdl(double,[.5,.5]);      ## final probability: uniform
-  $omega  = log($omegap/$omegap->sum);
+  $omegaf = pdl(double,[1,1]);      ## final probability: uniform
+
+  ##-- sanity: a+omega==1
+  ##-- plain
+  #$afsumover = $af->xchg(0,1)->sumover + $omegaf;
+  #$a = log($af / $afsumover);
+  #$omega = log($omegaf / $afsumover);
+
+  ##-- simulate maximize()
+  $logafsumover = log($af)->xchg(0,1)->logsumover->inplace->logadd(log($omegaf));
+  $a = log($af) - $logafsumover;
+  $omega = log($omegaf) - $logafsumover;
+
+  $ap = $a->exp;
+  $omegap = $omega->exp;
 }
 
 sub tptest1 {
@@ -96,14 +110,14 @@ sub tptest1 {
   $fw = hmmfw($a,$b,$pi, $o);
   $fwp = exp($fw);
 
-  $fwp_expect  = pdl(double, [[1/2,0],[0,1/4]]);
+  $fwp_expect  = pdl(double, [[1/2,0],[0,1/5]]);
   print "fw:  ", (all($fwp->approx($fwp_expect,1e-6))   ? "OK" : "NOT OK."), "\n";
 
   ##-- beta
   $bw  = hmmbw($a,$b,$omega, $o);
   $bwp = exp($bw);
 
-  $bwp_expect  = pdl(double, [[1/4,1/4],[1/2,1/2]]);
+  $bwp_expect  = pdl(double, [[2/25,2/25],[1/5,1/5]]);
   print "bw:  ", (all($bwp->approx($bwp_expect,1e-6))   ? "OK" : "NOT OK."), "\n";
 
   ##-- text prob
@@ -132,6 +146,20 @@ sub emtest1e0 {
 
 use vars qw($eaf $ebf $epif $eomegaf);
 sub emtest1e {
+  foreach $o (@os) {
+    ##-- alpha
+    $fw = hmmfw($a,$b,$pi, $o); $fwp = exp($fw);
+
+    ##-- beta
+    $bw  = hmmbw($a,$b,$omega, $o); $bwp = exp($bw);
+
+    ##-- text-prob
+    $etp->inplace->logadd(logsumover($fw->slice(",-1") + $omega));
+
+    ##-- re-est: expect
+    hmmexpect($a,$b,$pi,$omega, $o, $fw,$bw, $ea,$eb,$epi,$eomega);
+  }
+  $etp -= log(scalar(@os));
   foreach $o (@os) {
     ##-- alpha
     $fw = hmmfw($a,$b,$pi, $o); $fwp = exp($fw);
@@ -185,21 +213,16 @@ sub emtest1u {
 sub vtest1 {
   $n = 2; $k = 2;
 
-  ##-- a
-  $ap = pdl(double, [[.75, .25], [.25, .75]]); ##-- arcs: prefer same state
-  $a = log(normpdl($ap));
+  $pi = pdl(double,[.6,.4])->log;
 
-  ##-- b
-  $bp = pdl(double, [[.8, .2], [.2, .8]]); ##-- obs: prefer state==obs
-  $b = log(normpdl($bp));
+  $a = pdl(double,   [[.5, .2],
+		      [.3, .5]])->log;
+  $omega = pdl(double,[.2, .3])->log;
 
-  ##-- pi
-  $pip = pdl(double,[.6,.4]);    ##-- initial probability: prefer state-0
-  $pi = log($pip/$pip->sum);
+  $b = pdl(double, [[.8, .2], [.2, .8]])->log;
 
-  ##-- omega:
-  $omegap = pdl(double,[.4,.6]); ##-- final probability: prefer state-1
-  $omega  = log($omegap/$omegap->sum);
+  ##-- aliases
+  ($ap,$bp,$pip,$omegap) = map { exp($_) } ($a,$b,$pi,$omega);
 
   ##-- o
   $o = pdl([0,1]); $t=$o->nelem;
@@ -214,6 +237,8 @@ sub vtest2 {
 
   $path = hmmpath($psi, sequence($n));
   $qbest = maximum_ind($delta->slice(",-1") + $omega)->at(0);
+
+  use vars qw($pbest);
   $pbest = $path->slice(",($qbest)");
 }
 
