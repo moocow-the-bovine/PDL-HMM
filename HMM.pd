@@ -4,7 +4,7 @@
 ## Header Administrivia
 ##======================================================================
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 pp_setversion($VERSION);
 
 ##------------------------------------------------------
@@ -14,14 +14,58 @@ pp_addpm({At=>'Top'},<<'EOPM');
 
 =head1 NAME
 
-PDL::HMM - PDL Hidden Markov Model utilities
+PDL::HMM - Hidden Markov Model utilities in PDL
 
 =head1 SYNOPSIS
 
  use PDL::HMM;
 
  ##-----------------------------------------------------
- ## todo
+ ## Dimensions
+
+ $N = $number_of_states;
+ $M = $number_of_symbols;
+ $T = $length_of_input;
+
+ ##-----------------------------------------------------
+ ## Parameters
+
+ $a  = log(random($N,$N));
+ $b  = log(random($N,$M));
+ $pi = log(random($N));
+ $omega = log(random($N));
+
+ $o  = long(rint($M*random($T)));
+
+ ##-----------------------------------------------------
+ ## Log arithmetic
+
+ $log0 = logzero;
+ $logz = logadd(log($x),log($y));
+ $logz = logdiff(log($x),log($y));
+ $logz = logsumover(log($x));
+
+ ##-----------------------------------------------------
+ ## Sequence Probability
+
+ $alpha = hmmfw($a,$b,$pi,    $o);
+ $beta  = hmmbw($a,$b,$omega, $o);
+
+ ##-----------------------------------------------------
+ ## Parameter Estimation
+
+ ($ea,$eb,$epi,$eomega) = hmmexpect0($a,$b,$pi,$omega);       ##-- initialize
+
+ hmmexpect($a,$b,$pi,$omega, $o,$alpha,$beta, $ea,$eb,$epi);  ##-- expect
+
+ ($a,$b,$pi) = hmmmaximize($ea,$eb,$epi);                     ##-- maximize
+
+ ##-----------------------------------------------------
+ ## Sequence Analysis
+
+ ($delta,$psi) = hmmviterbi($a,$b,$pi, $o);     ##-- trellis
+
+ $paths = hmmpath($psi, sequence($T));          ##-- backtrace
 
 =cut
 
@@ -141,7 +185,7 @@ pp_def('logdiff',
 ## log sum: logsumover(a) = log(sumover(exp(a)))
 pp_def('logsumover',
        Pars => 'a(n); [o]b()',
-       Code => (join("\n",
+       Code => (join(" ",
 		     'double sum=LOG_ZERO;',
 		     'loop (n) %{ sum = logadd($a(),sum); %}',
 		     '$b() = sum;')),
@@ -225,7 +269,7 @@ pp_def
 Doc=>
   ('Compute forward probability (alpha) matrix
 for input $o given model parameters
-@theta = ($a, $b, $pi).
+@theta = ($a, $b, $pi, $omega).
 
 Output (pseudocode) for all 0<=i<N, 0<=t<T:
 
@@ -233,7 +277,8 @@ Output (pseudocode) for all 0<=i<N, 0<=t<T:
 
 Note that:
 
-  log P( $o | @theta ) = logsumover( $alpha(:,t-1) )
+  log P( $o | @theta ) = logsumover( $omega() + $alpha(:,t-1) )
+
 '),
 
 );
@@ -247,13 +292,13 @@ pp_add_exported('','hmmalpha');
 pp_def
 #@l=
 ('hmmbw',
- Pars => 'a(N,N); b(N,M); o(T); [o]beta(N,T)',
+ Pars => 'a(N,N); b(N,M); omega(N); o(T); [o]beta(N,T)',
  Code =>
 ('
  int i,j,t = $SIZE(T)-1;
 
  /*-- Initialize: time t==T --*/
- loop(N) %{ $beta(T=>t) = LOG_ONE; %}
+ loop(N) %{ $beta(T=>t) = $omega(); %}
 
  /*-- Loop: time t < T --*/
  for (t--; t >= 0; t--) {
@@ -294,7 +339,7 @@ pp_def
 Doc=>
   ('Compute backward probability (beta) matrix
 for input $o given model parameters
-@theta = ($a, $b, $pi).
+@theta = ($a, $b, $pi, $omega).
 
 Output (pseudocode) for all 0<=i<N, 0<=t<T:
 
@@ -302,7 +347,7 @@ Output (pseudocode) for all 0<=i<N, 0<=t<T:
 
 Note that:
 
-  log P( $o | @theta ) = logsumover( $pi() + $beta(:,0) )
+  log P( $o | @theta ) = logsumover( $pi() + $b(:,$o(0)) $beta(:,0) )
 
 '),
 
@@ -326,7 +371,7 @@ pp_addpm(<<'EOPM');
 
 =for sig
 
-  Signature: (a(N,N); b(N,M); pi(N); [o]ea(N,N); [o]eb(N,M); [o]epi(N))
+  Signature: (a(N,N); b(N,M); pi(N); omega(N); [o]ea(N,N); [o]eb(N,M); [o]epi(N); [o]eomega(N))
 
 Initializes expectation matrices $ea(), $eb() and $epi() to logzero().
 For use with hmmexpect().
@@ -334,17 +379,19 @@ For use with hmmexpect().
 =cut
 
 sub hmmexpect0 {
-  my ($a,$b,$pi, $ea,$eb,$epi) = @_;
+  my ($a,$b,$pi,$omega, $ea,$eb,$epi,$eomega) = @_;
 
   $ea  = zeroes($a->type,  $a->dims)  if (!defined($ea));
   $eb  = zeroes($b->type,  $b->dims)  if (!defined($eb));
   $epi = zeroes($pi->type, $pi->dims) if (!defined($epi));
+  $eomega = zeroes($omega->type, $omega->dims) if (!defined($eomega));
 
   $ea  .= PDL::logzero();
   $eb  .= PDL::logzero();
   $epi .= PDL::logzero();
+  $eomega .= PDL::logzero();
 
-  return ($ea,$eb,$epi);
+  return ($ea,$eb,$epi,$eomega);
 }
 
 EOPM
@@ -356,17 +403,19 @@ pp_add_exported('', 'hmmexpect0');
 ## Partial re-estimation
 pp_def
 ('hmmexpect',
- Pars => join("\n",
+ Pars => join(" ",
 	      qw(a(N,N);
 		 b(N,M);
 		 pi(N);
+		 omega(N);
 		 o(T);
 		 alpha(N,T);
 		 beta(N,T);),
 	      #qw([t]gamma_tp1(N);), ##-- (N) : gamma(N=>i, T=>(t+1))
 	      qw([o]ea(N,N);
 		 [o]eb(N,M);
-		 [o]epi(N))),
+		 [o]epi(N);
+		 [o]eomega(N))),
  Code =>
 ('
  int i,j,t;
@@ -377,12 +426,14 @@ pp_def
 
  /*-- Initialize: t==(T-1): P(o|@theta) --*/
  t = $SIZE(T)-1;
- loop (N) %{ p_o = logadd(p_o, $alpha(T=>t)); %}
+ loop (N) %{ p_o = logadd(p_o, $omega() + $alpha(T=>t)); %}
 
  /*-- Initialize: t==(T-1): Iterate: state_t==i: get gamma(i,t) --*/
  o_t = $o(T=>t);
  for (i=0; i<$SIZE(N); i++) {
-   $eb(N=>i,M=>o_t) = logadd($eb(N=>i,M=>o_t), $alpha(N=>i,T=>t) + $beta(N=>i,T=>t) - p_o);
+   gamma_it         = $alpha(N=>i,T=>t) + $beta(N=>i,T=>t) - p_o;
+   $eb(N=>i,M=>o_t) = logadd($eb(N=>i,M=>o_t), gamma_it);
+   $eomega(N=>i)    = logadd($eomega(N=>i)   , gamma_it);
  }
 
  /*-- Main: Iterate: T-1 > t >= 0 --*/
@@ -392,7 +443,7 @@ pp_def
 
    /*-- Main: Iterate: state_t == i --*/
    for (i=0; i<$SIZE(N); i++) {
-     gamma_it = $alpha(N=>i,T=>t) + $beta(N=>i,T=>t);
+     gamma_it = $alpha(N=>i,T=>t) + $beta(N=>i,T=>t) - p_o;
 
      /*-- Main: Iterate: state_(t+1) == j --*/
      for (j=0; j<$SIZE(N); j++) {
@@ -411,10 +462,10 @@ pp_def
 '),
 
  Doc =>
-  ('Compute partial Baum-Welch re-estimation of the model @theta = ($a, $b, $pi)
+  ('Compute partial Baum-Welch re-estimation of the model @theta = ($a, $b, $pi, $omega)
 for the observation sequence $o() with forward- and backward-probability
 matrices $alpha(), $beta().  Result is recorded as log pseudo-frequencies
-in the expectation matrices $ea(), $eb(), and $epi(), which are required paramters,
+in the expectation matrices $ea(), $eb(), $epi(), and $eomega(), which are required parameters,
 and should have initialized (e.g. by hmmexpect0()) before calling this function.
 
 Can safely be called sequentially for incremental reestimation.
@@ -430,27 +481,29 @@ pp_addpm(<<'EOPM');
 
 =for sig
 
-  Signature: (EA(n,n); EB(n,k); Epi(n); [o]Ahat(n,n); [o]Bhat(n,k); [o]pihat(n));
+  Signature: (Ea(N,N); Eb(N,M); Epi(N); Eomega(N); [o]ahat(N,N); [o]bhat(N,M); [o]pihat(N); [o]omegahat(N));
 
-Maximizes expectation values from $EA(), $EB()m and $Epi()
-to log-probability matricies $Ahat(), $Bhat(), and $pihat().
+Maximizes expectation values from $Ea(), $Eb(), $Epi(), and $Eomega()
+to log-probability matricies $ahat(), $bhat(), $pihat(), and $omegahat().
 Can also be used to compile a maximum-likelihood model
 from log-frequency matrices.
 
 =cut
 
 sub hmmmaximize {
-  my ($EA,$EB,$Epi, $Ahat,$Bhat,$pihat) = @_;
+  my ($ea,$eb,$epi,$eomega, $ahat,$bhat,$pihat,$omegahat) = @_;
 
-  $Ahat  = zeroes($EA->type,  $EA->dims)  if (!defined($Ahat));
-  $Bhat  = zeroes($EB->type,  $EB->dims)  if (!defined($Bhat));
-  $pihat = zeroes($Epi->type, $Epi->dims) if (!defined($pihat));
+  $ahat  = zeroes($ea->type,  $ea->dims)  if (!defined($ahat));
+  $bhat  = zeroes($eb->type,  $eb->dims)  if (!defined($bhat));
+  $pihat = zeroes($epi->type, $epi->dims) if (!defined($pihat));
+  $omegahat = zeroes($eomega->type, $eomega->dims) if (!defined($omegahat));
 
-  $Ahat  .= $EA  - $EA->xchg(0,1)->logsumover;
-  $Bhat  .= $EB  - $EB->xchg(0,1)->logsumover;
-  $pihat .= $Epi - $Epi->logsumover;
+  $ahat  .= $ea  - $ea->xchg(0,1)->logsumover;
+  $bhat  .= $eb  - $eb->xchg(0,1)->logsumover;
+  $pihat .= $epi - $epi->logsumover;
+  $omegahat .= $eomega - $eomega->logsumover;
 
-  return ($Ahat,$Bhat,$pihat);
+  return ($ahat,$bhat,$pihat,$omegahat);
 }
 
 EOPM
@@ -473,13 +526,14 @@ EOPM
 ## Sequence Analysis: Viterbi
 pp_def
 ('hmmviterbi',
- Pars => join("\n",
+ Pars => join(" ",
 	      qw(a(N,N);
 		 b(N,M);
-		 pi(N);
-		 o(T);
+		 pi(N);),
+	      #qw(omega(N);),
+	      qw(o(T);
 		 [o]delta(N,T);),
-	         'int [o]psi(N,T)'),
+	      'int [o]psi(N,T)'),
  Code =>
 ('
  int i,j, t, o_t;
@@ -549,10 +603,24 @@ pp_def
    printf("\n");
 #endif
  }
+'
+# /*-- Finalize: t==(T-1): Loop: state_(t-1)==N --*/
+# t = $SIZE(T)-1;
+# loop (N) %{
+#   $delta(T=>t) += $omega();
+#
+##ifdef DEBUG_VITERBI
+#   printf("FINAL: t=%d,j=%d: omega(j=%d)=%.2e  delta(t=%d,j=%d)=%.2e\n",
+#           t,N,
+#           N, exp($omega()),
+#           t,N, $delta(T=>t));
+##endif
+# %}
+.'
 '),
   Doc =>
   ('Computes Viterbi algorithm trellises $delta() and $gamma() for the
-observation sequence $o() given the model parameters @theta = ($a,$b,$pi).
+observation sequence $o() given the model parameters @theta = ($a,$b,$pi,$omega).
 
 Outputs:
 
@@ -562,7 +630,14 @@ Probability matrix $delta(): log probability of best path to state $j at time $t
 
 Path backtrace matrix $psi(): best predecessor for state $j at time $t:
 
- $psi(j,t) = arg_{q(t-1)} max_{q(0:t)} P( $o(0:t), q(0:t-1), $q(t)==j | A,B,pi )
+ $psi(j,t) = arg_{q(t-1)} max_{q(0:t)} P( $o(0:t), q(0:t-1), $q(t)==j | @theta )
+
+Note that if you are using termination probabilities $omega(),
+then in order to find the most likely final state, you need to
+compute the contribution of $omega() yourself, which is easy
+to do:
+
+ $best_final_q = maximum_ind($delta->slice(",-1") + $omega);
 
 '),
 );
@@ -595,12 +670,14 @@ Path backtrace $path(): state (in best sequence) at time $t:
 
  $path(t) = arg_{q(t)} max_{q(0:T-1)} log P( $o(), q(0:T-2), $q(T-1)==$qfinal() | @theta )
 
-Note: to find the single best path, just set:
+This even threads over multiple final states, if specified,
+so you can align paths to their final states just by calling:
 
- $qfinal = maximum_ind($delta->slice(",".($T-1)));
+ $bestpaths = hmmpath($psi, sequence($N));
 
-Wow. PDL is great.  I bet that this entire module could be written
-without PDL::PP, but hey -- it\'s here now, so what the heck...
+Note that $path(T-1) == $qfinal(): yes, this is redundant,
+but also tends to be quite convenient.
+
 '),
 );
 
@@ -620,10 +697,24 @@ pp_addpm(<<'EOPM');
 
 =head1 COMMON PARAMETERS
 
-HMMs are specified by parameters $A(n,n) and $B(n,k),
-where the following hold:
+HMMs are specified by parameters $a(N,N), $b(N,M), $pi(N), and $omega(N);
+input sequences are represented as vectors $o(T) of integer values in the range [0..M-1],
+where the following notational conventions are used:
 
 =over 4
+
+
+=item States:
+
+The model has $N states, denoted $q,
+0 <= $q < $N.
+
+
+=item Alphabet:
+
+The input- (aka "observation-") alphabet of the model has $M elements,
+denoted $o(t), 0 <= $o(t) < $M.
+
 
 =item Time indices:
 
@@ -631,16 +722,12 @@ Time indices are denoted $t,
 1 <= $t < $T.
 
 
-=item States:
+=item Input Sequences:
 
-The model has $N states, denoted $q,
-0 <= $q(t) < $N.
+Input- (aka "observation-") sequences are represented as vectors of
+of length $T whose component values are in the range [0..M-1],
+i.e. alphabet indices.
 
-
-=item Alphabet:
-
-The input- (observation-) alphabet of the model has $M elements,
-denoted $o, 0 <= $o(t) < $M.
 
 
 =item Initial Probabilities:
@@ -650,11 +737,29 @@ The vector $pi(N) gives the (log) initial state probability distribution:
  $pi(i) = log P( $q(0)==i )
 
 
+
+=item Final Probabilities:
+
+The vector $omega(N) gives the (log) final state probability distribution:
+
+ $omega(i) = log P( $q($T)==i )
+
+This parameter is a nonstandard extension.
+You can simulate the behavior of more traditional definitions
+(such as that given in Rabiner (1989)) by setting:
+
+ $omega = zeroes($N);
+
+wherever it is required.
+
+
+
 =item Arc Probabilities:
 
 The matrix $a(N,N) gives the (log) conditional state-transition probability distribution:
 
  $a(i,j) = log P( $q(t+1)==j | $q(t)==i )
+
 
 
 =item Emission Probabilities:
@@ -663,12 +768,6 @@ The matrix $b(N,M) gives the (log) conditional symbol emission probability:
 
  $b(j,o) = log P( $o(t)==o | $q(t)==j )
 
-
-=item Input Sequences:
-
-Observation sequences are represented by vectors of alphabet indices
-(of length $T); sequence values are
-used as indices into the model parameters $A(), $B(), and $pi().
 
 
 =back
@@ -684,7 +783,7 @@ Perl by Larry Wall.
 
 PDL by Karl Glazebrook, Tuomas J. Lukka, Christian Soeller, and others.
 
-Implementation based on the formulae in:
+Implementation based largely on the formulae in:
 L. E. Rabiner, "A tutorial on Hidden Markov Models and selected
 applications in speech recognition," Proceedings of the IEEE 77:2,
 Februrary, 1989, pages 257--286.
