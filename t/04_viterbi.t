@@ -19,7 +19,7 @@ sub testmodel1 {
   $a = pdl(double,   [[.5, .2],
 		      [.3, .5]])->log;
 
-  $omega = pdl(double,[.2, .3])->log;
+  #$omega = pdl(double,[.2, .3])->log;
 
   $b = pdl(double, [[.8, .2], [.2, .8]])->log;
 
