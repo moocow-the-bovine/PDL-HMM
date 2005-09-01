@@ -1,3 +1,6 @@
+^HMM\.pm$
+^HMM\.xs$
+^HMM\.c$
 ~$
 \.bs$
 \.o$

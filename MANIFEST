@@ -3,9 +3,6 @@ MANIFEST
 MANIFEST.SKIP
 Makefile.PL
 HMM.pd
-HMM.pm
-HMM.xs
-HMM.c
 README.txt
 t/common.plt
 t/00_basic.t
