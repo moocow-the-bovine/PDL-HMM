@@ -66,8 +66,8 @@ PDL::HMM - Hidden Markov Model utilities in PDL
 
  @expect = ($ea,$eb,$epi,$eomega) = hmmexpect0(@model);    ##-- initialize
 
- hmmexpect(@theta, $o,     $alpha, $beta,  $ea,$eb,$epi);  ##-- expect (full)
- hmmexpect(@theta, $o,$oq, $alphaq,$betaq, $ea,$eb,$epi);  ##-- expect (constrained)
+ hmmexpect (@theta, $o,     $alpha, $beta,  $ea,$eb,$epi); ##-- expect (full)
+ hmmexpectq(@theta, $o,$oq, $alphaq,$betaq, $ea,$eb,$epi); ##-- expect (constrained)
 
  ($a,$b,$pi,$omega) = hmmmaximize($ea,$eb,$epi,$eomega);   ##-- maximize
 
@@ -950,9 +950,9 @@ pp_def
    o_t = $o(T=>t);
 
    /*-- Loop: t>0: q_(t)=qj : state_(t)=oq(qj,t)=j --*/
-   for (qj=0; qj<$SIZE(N); qj++) {
+   for (qj=0; qj<$SIZE(Q); qj++) {
      j         = $oq(Q=>qj,T=>t);
-     i         = $oq(Q=>0,T=>t-1);
+     i         = $oq(Q=>0, T=>t-1);
      psiq_jt   = 0;
 
      if (j >= 0 && i >=0) {

@@ -135,7 +135,7 @@ sub tptest1q {
   $o = pdl([0,1,1]);
 
   ##-- oq
-  $oq = zeroes(long, $n, $o->nelem)-1;
+  $oq = zeroes(long, $k, $o->nelem)-1;
   $b->dice_axis(1,$o)->maximum_n_ind($oq);
 
   $oq1 = $oq->slice("0");
