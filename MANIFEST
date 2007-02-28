@@ -10,4 +10,3 @@ t/01_logarith.t
 t/02_txtprob.t
 t/03_baum.t
 t/04_viterbi.t
-META.yml                                 Module meta-data (added by MakeMaker)
