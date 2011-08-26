@@ -18,3 +18,5 @@
 \.html$
 \.tmp$
 ^#Makefile#$
+\.svn
+\.gz$
