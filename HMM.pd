@@ -64,7 +64,7 @@ PDL::HMM - Hidden Markov Model utilities in PDL
  ##-----------------------------------------------------
  ## Parameter Estimation
 
- @expect = ($ea,$eb,$epi,$eomega) = hmmexpect0(@model);    ##-- initialize
+ @expect = ($ea,$eb,$epi,$eomega) = hmmexpect0(@theta);    ##-- initialize
 
  hmmexpect (@theta, $o,     $alpha, $beta,  $ea,$eb,$epi); ##-- expect (full)
  hmmexpectq(@theta, $o,$oq, $alphaq,$betaq, $ea,$eb,$epi); ##-- expect (constrained)
@@ -660,7 +660,7 @@ pp_def
 for the observation sequence $o() with forward- and backward-probability
 matrices $alpha(), $beta().  Result is recorded as log pseudo-frequencies
 in the expectation matrices $ea(), $eb(), $epi(), and $eomega(), which are required parameters,
-and should have initialized (e.g. by hmmexpect0()) before calling this function.
+and should have been initialized (e.g. by hmmexpect0()) before calling this function.
 
 Can safely be called sequentially for incremental reestimation.
 '),
@@ -752,7 +752,7 @@ considering only the initial non-negative state
 indices in $oq(:,t) for observation $o(t).
 Result is recorded as log pseudo-frequencies
 in the expectation matrices $ea(), $eb(), $epi(), and $eomega(), which are required parameters,
-and should have initialized (e.g. by hmmexpect0()) before calling this function.
+and should have been initialized (e.g. by hmmexpect0()) before calling this function.
 
 Can safely be called sequentially for incremental reestimation.
 '),
@@ -771,7 +771,7 @@ pp_addpm(<<'EOPM');
   Signature: (Ea(N,N); Eb(N,M); Epi(N); Eomega(N); [o]ahat(N,N); [o]bhat(N,M); [o]pihat(N); [o]omegahat(N));
 
 Maximizes expectation values from $Ea(), $Eb(), $Epi(), and $Eomega()
-to log-probability matricies $ahat(), $bhat(), $pihat(), and $omegahat().
+to log-probability matrices $ahat(), $bhat(), $pihat(), and $omegahat().
 Can also be used to compile a maximum-likelihood model
 from log-frequency matrices.
 
