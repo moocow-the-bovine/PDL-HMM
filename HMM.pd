@@ -4,7 +4,7 @@
 ## Header Administrivia
 ##======================================================================
 
-our $VERSION = '0.05';
+our $VERSION = '0.0501';
 pp_setversion($VERSION);
 
 ##------------------------------------------------------
@@ -300,7 +300,9 @@ Output (pseudocode) for all 0<=i<N, 0<=t<T:
 
  $alpha(i,t) = log P( $o(0:t), q(t)==i | @theta )
 
-Note that:
+Note that the final-state probability vector $omega() is neither
+passed to this function nor used in the computation, but
+can be used to compute the final sequence probability for $o as:
 
   log P( $o | @theta ) = logsumover( $omega() + $alpha(:,t-1) )
 
@@ -391,7 +393,9 @@ Output (pseudocode) for all 0<=qi<Q, 0<=t<T:
 
  $alphaq(qi,t) = log P( $o(0:t), q(t)==$oq(qi,t) | @theta )
 
-Note that:
+Note that the final-state probability vector $omega() is neither
+passed to this function nor used in the computation, but
+can be used to compute the final sequence probability for $o as:
 
   log P( $o | @theta ) = logsumover( $alphaq(:,t-1) + $omega($oqTi) )
 
@@ -465,9 +469,11 @@ Output (pseudocode) for all 0<=i<N, 0<=t<T:
 
  $beta(i,t) = log P( $o(t+1:T-1) | q(t)==i, @theta )
 
-Note that:
+Note that the initial-state probability vector $pi() is neither
+passed to this function nor used in the computation, but
+can be used to compute the final sequence probability for $o as:
 
-  log P( $o | @theta ) = logsumover( $pi() + $b(:,$o(0)) $beta(:,0) )
+  log P( $o | @theta ) = logsumover( $pi() + $b(:,$o(0)) + $beta(:,0) )
 
 '),
 
@@ -532,7 +538,9 @@ Output (pseudocode) for all 0<=qi<Q, 0<=t<T:
 
  $betaq(qi,t) = log P( $o(t+1:T-1) | q(t)==$oq(qi,t), @theta )
 
-Note that:
+Note that the initial-state probability vector $pi() is neither
+passed to this function nor used in the computation, but
+can be used to compute the final sequence probability for $o as:
 
   log P( $o | @theta ) = logsumover( $betaq(:,0) + $pi($oq0i) + $b($oq0i,$o(0)) )
 
@@ -660,7 +668,7 @@ pp_def
 for the observation sequence $o() with forward- and backward-probability
 matrices $alpha(), $beta().  Result is recorded as log pseudo-frequencies
 in the expectation matrices $ea(), $eb(), $epi(), and $eomega(), which are required parameters,
-and should have been initialized (e.g. by hmmexpect0()) before calling this function.
+and should have been initialized (e.g. by L</hmmexpect0>()) before calling this function.
 
 Can safely be called sequentially for incremental reestimation.
 '),
@@ -752,7 +760,7 @@ considering only the initial non-negative state
 indices in $oq(:,t) for observation $o(t).
 Result is recorded as log pseudo-frequencies
 in the expectation matrices $ea(), $eb(), $epi(), and $eomega(), which are required parameters,
-and should have been initialized (e.g. by hmmexpect0()) before calling this function.
+and should have been initialized (e.g. by L</hmmexpect0>()) before calling this function.
 
 Can safely be called sequentially for incremental reestimation.
 '),
@@ -1216,11 +1224,11 @@ Probably many.
 
 =head1 AUTHOR
 
-Bryan Jurish E<lt>moocow@ling.uni-potsdam.deE<gt>
+Bryan Jurish E<lt>moocow@cpan.orgE<gt>
 
 =head2 Copyright Policy
 
-Copyright (C) 2005, Bryan Jurish. All rights reserved.
+Copyright (C) 2005, 2006, 2008, 2011 by Bryan Jurish. All rights reserved.
 
 This package is free software, and entirely without warranty.
 You may redistribute it and/or modify it under the same terms
