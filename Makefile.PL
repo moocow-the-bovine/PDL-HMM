@@ -13,7 +13,9 @@ push(@{$hash{LIBS}}, '-lm');
 #$hash{INC} .= '';
 $hash{DIR} = [];
 #$hash{OBJECT} .= '';
+##
 $hash{VERSION_FROM} = 'HMM.pd';
+##
 $hash{realclean}{FILES} .= ' *~ *.tmp README.txt';
 
 WriteMakefile(%hash);
