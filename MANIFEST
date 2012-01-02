@@ -2,7 +2,8 @@ ChangeLog
 MANIFEST
 MANIFEST.SKIP
 Makefile.PL
-HMM.pd
+HMM.pd		# HMM.pm
+HMM.pm
 README.txt
 t/common.plt
 t/00_basic.t
