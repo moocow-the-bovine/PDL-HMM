@@ -1,3 +1,6 @@
+v0.06002 Tue, 24 Sep 2013 13:51:54 +0200 moocow
+	* CONFIGURE_REQUIRES{PDL}=0 in Makefile.PL for cpan-testers friendliness
+
 v0.06 Mon, 02 Jan 2012 12:46:15 +0100 moocow
 	* added pdlmaker.plm for cpan-friendly distribution
 
