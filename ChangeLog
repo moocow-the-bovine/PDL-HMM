@@ -1,3 +1,7 @@
+v0.06003 Fri, 24 Jul 2015 11:00:38 +0200 moocow
+	* accomodate typo-fix "propogate_badflag"->"propagate_badglag" for PDL >= v2.008 API
+	* fixes RT bug #104726
+
 v0.06002 Tue, 24 Sep 2013 13:51:54 +0200 moocow
 	* CONFIGURE_REQUIRES{PDL}=0 in Makefile.PL for cpan-testers friendliness
 

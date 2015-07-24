@@ -4,8 +4,14 @@
 ## Header Administrivia
 ##======================================================================
 
-our $VERSION = '0.06002';
+our $VERSION = '0.06003';
 pp_setversion($VERSION);
+
+##-- accomodate typo-fix in PDL-2.008 API
+eval "use PDL::Version;";
+use version;
+our $pdl_version       = version->parse($PDL::Version::VERSION);
+our $propagate_badflag = $pdl_version >= '2.008' ? "propagate_badflag" : "propogate_badflag";
 
 ##------------------------------------------------------
 ## pm additions
@@ -179,7 +185,7 @@ pp_def('logzero',
        Inplace=>['a'], ##-- can run inplace on a()
        Code => '$a() = LOG_ZERO;',
        CopyBadStatusCode =>
-	  (' if ( $ISPDLSTATEBAD(a) ) PDL->propogate_badflag(a,0);'
+	  (" if ( \$ISPDLSTATEBAD(a) ) PDL->${propagate_badflag}(a,0);"
 	   .'  $SETPDLSTATEGOOD(a);'),
        HandleBad=>1,
        Doc => 'Approximates $a() = log(0), avoids nan.',
