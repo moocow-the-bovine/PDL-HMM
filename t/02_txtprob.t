@@ -1,19 +1,27 @@
-# -*- Mode: Perl -*-
+# -*- Mode: CPerl -*-
 # t/02_txtprob.t: test text-probability
+use Test::More tests => 4;
 
-$TEST_DIR = './t';
-#use lib qw(../blib/lib ../blib/arch); $TEST_DIR = '.'; # for debugging
 
-# load common subs
-use Test;
-do "$TEST_DIR/common.plt";
+##-- common subs
+my $TEST_DIR;
+BEGIN {
+  use File::Basename;
+  use Cwd;
+  $TEST_DIR = Cwd::abs_path dirname( __FILE__ );
+  eval qq{use lib ("$TEST_DIR/$_/blib/lib","$TEST_DIR/$_/blib/arch");} foreach (qw(../.. ..));
+  do "$TEST_DIR/common.plt" or  die("$0: failed to load $TEST_DIR/common.plt: $@");
+}
+
+##-- common modules
 use PDL;
 use PDL::HMM;
 
-BEGIN { plan tests=>4, todo=>[]; }
-
+##----------------------------------------------------------------------
+## tests
 
 ## test model 1:
+my ($pi,$a,$omega,$b);
 sub testmodel1 {
   #$n = 2; $k = 2;
 
@@ -27,6 +35,7 @@ sub testmodel1 {
 		    [0,1]])->log;
 }
 
+my ($fw,$fwtp, $bw,$bwtwp);
 sub testtp {
   my $o=shift;
   $fw = hmmfw($a,$b,$pi, $o);
@@ -41,11 +50,10 @@ sub testtp {
 testmodel1;
 testtp(pdl([0,1]));
 
-isok("model-1: alpha",      all($fw->approx(pdl(double, [[1/2,0],[0,1/5]])->log)));
-isok("model-1: beta",       all($bw->approx(pdl(double, [[2/25,2/25],[1/5,1/5]])->log)));
-isok("model-1: txtprob",    all($fwtp->approx(2/5)));
-isok("model-1: p_alpha~p_beta", all($bwtp->approx($fwtp)));
-
+pdlapprox("model-1: alpha",   $fw, pdl(double, [[1/2,0],[0,1/5]])->log);
+pdlapprox("model-1: beta",    $bw, pdl(double, [[2/25,2/25],[1/5,1/5]])->log);
+pdlapprox_nodims("model-1: txtprob", $fwtp->exp, 1/25);
+pdlapprox("model-1: p_alpha~p_beta", $fwtp, $bwtp);
 
 print "\n";
 # end of t/XX_yyyy.t

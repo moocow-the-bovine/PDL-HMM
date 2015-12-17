@@ -1,3 +1,8 @@
+v0.06004 Thu, 17 Dec 2015 13:39:01 +0100 moocow
+	* fixed wrongly succeeding bogus tests with unary ok()
+	  - tests now use Test::More and re-factored common test subroutines
+	* pdlmaker.plm doesn't distribute generated PM files any more (PDL now does this for us)
+
 v0.06003 Fri, 24 Jul 2015 11:00:38 +0200 moocow
 	* accomodate typo-fix "propogate_badflag"->"propagate_badglag" for PDL >= v2.008 API
 	* fixes RT bug #104726

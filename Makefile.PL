@@ -6,7 +6,10 @@ require "pdlmaker.plm";
 $package  = ["HMM.pd",HMM,PDL::HMM];
 %hash = pdlmaker_init($package);
 
-my %prereq = (PDL=>0);
+my %prereq = (
+	      PDL=>0,
+	      'Test::More'=>0,
+	     );
 
 $hash{AUTHOR} = 'Bryan Jurish';
 $hash{ABSTRACT} = 'PDL Hidden Markov Model utilities';

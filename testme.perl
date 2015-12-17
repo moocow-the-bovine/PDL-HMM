@@ -125,6 +125,7 @@ sub tptest1 {
   $bwtp = sumover($bwp->slice(",0")  * $pip * $bp->slice(",(".$o->at(0).")"));
   print "fw==bw ? ", (all($fwtp->approx($bwtp),1e-6) ? "OK" : "NOT OK"), "\n";
 }
+tptest1();
 
 ##---------------------------------------------------------------------
 ## Forward, backward: constrained

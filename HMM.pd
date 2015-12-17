@@ -4,7 +4,7 @@
 ## Header Administrivia
 ##======================================================================
 
-our $VERSION = '0.06003';
+our $VERSION = '0.06004';
 pp_setversion($VERSION);
 
 ##-- accomodate typo-fix in PDL-2.008 API
@@ -80,11 +80,11 @@ PDL::HMM - Hidden Markov Model utilities in PDL
  ##-----------------------------------------------------
  ## Sequence Analysis
 
- ($delta,$psi)   = hmmviterbi($a,$b,$pi, $o);     ##-- trellis (full)
- ($deltaq,$psiq) = hmmviterbi($a,$b,$pi, $o,$oq); ##-- trellis (constrained)
+ ($delta,$psi)   = hmmviterbi ($a,$b,$pi, $o);     ##-- trellis (full)
+ ($deltaq,$psiq) = hmmviterbiq($a,$b,$pi, $o,$oq); ##-- trellis (constrained)
 
- $paths  = hmmpath(     $psi,  sequence($N));     ##-- backtrace (full)
- $pathsq = hmmpath($oq, $psiq, sequence($A));     ##-- backtrace (constrained)
+ $paths  = hmmpath (     $psi,  sequence($N));     ##-- backtrace (full)
+ $pathsq = hmmpathq($oq, $psiq, sequence($A));     ##-- backtrace (constrained)
 
 =cut
 
@@ -835,7 +835,7 @@ pp_def
 		 pi(N);),
 	      #qw(omega(N);),
 	      qw(o(T);
-		 [o]delta(N,T);),
+		   [o]delta(N,T);),
 	      'int [o]psi(N,T)'),
  Code =>
 ('
