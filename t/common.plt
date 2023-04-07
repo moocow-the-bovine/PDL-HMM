@@ -99,7 +99,8 @@ sub pdlapprox {
   isok($label,
        defined($got) && defined($want)
        && cmp_dims($got,$want)
-       && all(matchpdla($want,$got,$eps)));
+       && all(matchpdla($want,$got,$eps)))
+    or diag "got=$got\nwant=$want";
 }
 
 # pdlapprox_nodims($label, $got, $want, $eps=1e-5)
@@ -113,7 +114,6 @@ sub pdlapprox_nodims {
        #&& cmp_dims($got,$want)
        && all(matchpdla($want,$got,$eps)));
 }
-
 
 print "loaded ", __FILE__, "\n";
 
