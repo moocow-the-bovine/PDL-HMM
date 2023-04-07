@@ -5,6 +5,7 @@ BEGIN { $| = 1; }
 
 # isok($label,@_) -- prints helpful label
 sub isok {
+  local $Test::Builder::Level = $Test::Builder::Level + 2;
   my $label = shift;
   if (@_==1) {
     ok($_[0],$label);
@@ -117,4 +118,3 @@ sub pdlapprox_nodims {
 print "loaded ", __FILE__, "\n";
 
 1;
-
