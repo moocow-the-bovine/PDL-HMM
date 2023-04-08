@@ -18,4 +18,4 @@ pdl-core
 xs-cookbook
 META.yml
 MYMETA.yml
-
+pp-*.c
