@@ -182,7 +182,6 @@ EOPM
 ## logzero(): near approximation of log(0)
 pp_def('logzero',
        Pars => 'float+ [o]a()',
-       Inplace=>['a'], ##-- can run inplace on a()
        Code => '$a() = LOG_ZERO;',
        CopyBadStatusCode =>
 	  (" if ( \$ISPDLSTATEBAD(a) ) PDL->${propagate_badflag}(a,0);"
