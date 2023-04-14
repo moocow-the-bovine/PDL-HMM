@@ -17,5 +17,5 @@ Makefile
 pdl-core
 xs-cookbook
 META.yml
-MYMETA.yml
+MYMETA.*
 pp-*.c
