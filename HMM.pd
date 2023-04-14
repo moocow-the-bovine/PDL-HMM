@@ -196,6 +196,7 @@ pp_def('logzero',
 ## log addition: logadd(a,b) = log(exp(a)+exp(b))
 pp_def('logadd',
        Pars => 'a(); b(); [o]c()',
+       GenericTypes => [qw(F D)],
        Inplace=>['a'], ##-- can run inplace on a()
        Code => '$c() = logadd($a(),$b());',
        Doc => 'Computes $c() = log(exp($a()) + exp($b())), should be more stable.',
@@ -205,6 +206,7 @@ pp_def('logadd',
 ## log subtraction: logdiff(a,b) = log(exp(max(a,b))-exp(min(a,b)))
 pp_def('logdiff',
        Pars => 'a(); b(); [o]c()',
+       GenericTypes => [qw(F D)],
        Inplace=>['a'], ##-- can run inplace on a()
        Code => '$c() = logdiff($a(),$b());',
        Doc => 'Computes log symmetric difference c = log(exp(max(a,b)) - exp(min(a,b))), may be more stable.',
@@ -215,6 +217,7 @@ pp_def('logdiff',
 ## log sum: logsumover(a) = log(sumover(exp(a)))
 pp_def('logsumover',
        Pars => 'a(n); [o]b()',
+       GenericTypes => [qw(F D)],
        Code => (join(" ",
 		     'double sum=LOG_ZERO;',
 		     'loop (n) %{ sum = logadd($a(),sum); %}',
@@ -239,6 +242,7 @@ EOPM
 pp_def
 ('hmmfw',
  Pars => 'a(N,N); b(N,M); pi(N);  o(T);  [o]alpha(N,T)',
+ GenericTypes => [qw(F D)],
  Code =>
 ('
  /*-- Initialize: t==0 --*/
@@ -324,6 +328,7 @@ pp_add_exported('','hmmalpha');
 pp_def
 ('hmmfwq',
  Pars => 'a(N,N); b(N,M); pi(N);  o(T); oq(Q,T);  [o]alphaq(Q,T)',
+ GenericTypes => [qw(F D)],
  Code =>
 ('
  /*-- Initialize: t==0 --*/
@@ -421,6 +426,7 @@ pp_add_exported('','hmmalphaq');
 pp_def
 #@l=
 ('hmmbw',
+ GenericTypes => [qw(F D)],
  Pars => 'a(N,N); b(N,M); omega(N); o(T); [o]beta(N,T)',
  Code =>
 ('
@@ -494,6 +500,7 @@ pp_add_exported('','hmmbeta');
 pp_def
 #@l=
 ('hmmbwq',
+ GenericTypes => [qw(F D)],
  Pars => 'a(N,N); b(N,M); omega(N); o(T); oq(Q,T); [o]betaq(Q,T)',
  Code =>
 ('
@@ -610,6 +617,7 @@ pp_add_exported('', 'hmmexpect0');
 ## Parameter Estimation: Expect
 pp_def
 ('hmmexpect',
+ GenericTypes => [qw(F D)],
  Pars => join(" ",
 	      qw(a(N,N);
 		 b(N,M);
@@ -684,6 +692,7 @@ Can safely be called sequentially for incremental reestimation.
 ## Parameter Estimation: Expect (constrained)
 pp_def
 ('hmmexpectq',
+ GenericTypes => [qw(F D)],
  Pars => join(" ",
 	      qw(a(N,N);
 		 b(N,M);
@@ -830,12 +839,13 @@ pp_def
 ('hmmviterbi',
  Pars => join(" ",
 	      qw(a(N,N);
-		 b(N,M);
+             b(N,M);
 		 pi(N);),
 	      #qw(omega(N);),
 	      qw(o(T);
 		   [o]delta(N,T);),
 	      'int [o]psi(N,T)'),
+ GenericTypes => [qw(F D)],
  Code =>
 ('
  int i,j, t, o_t;
@@ -935,6 +945,7 @@ to do:
 ## Sequence Analysis: Viterbi (constrained)
 pp_def
 ('hmmviterbiq',
+ GenericTypes => [qw(F D)],
  Pars => join(" ",
 	      qw(a(N,N);
 		 b(N,M);
@@ -1031,7 +1042,7 @@ to do:
 ## Sequence Analysis: Backtrace
 pp_def
 ('hmmpath',
- Pars => q(psi(N,T); int qfinal(); int [o]path(T)),
+ Pars => q(float+ psi(N,T); int qfinal(); int [o]path(T)),
  Code =>
 ('
  /*-- Initialize: t==T-1: state_(t)==final() --*/
@@ -1069,7 +1080,7 @@ but also tends to be quite convenient.
 ## Sequence Analysis: Backtrace (constrained)
 pp_def
 ('hmmpathq',
- Pars => q(oq(Q,T); psiq(Q,T); int qfinalq(); int [o]path(T)),
+ Pars => q(int oq(Q,T); float+ psiq(Q,T); int qfinalq(); int [o]path(T)),
  Code =>
 ('
  /*-- Initialize: t==T-1: state_(t)==final() --*/
@@ -1233,7 +1244,7 @@ Bryan Jurish E<lt>moocow@cpan.orgE<gt>
 
 =head2 Copyright Policy
 
-Copyright (C) 2005, 2006, 2008, 2011 by Bryan Jurish. All rights reserved.
+Copyright (C) 2005-2023 by Bryan Jurish. All rights reserved.
 
 This package is free software, and entirely without warranty.
 You may redistribute it and/or modify it under the same terms
