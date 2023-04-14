@@ -14,9 +14,9 @@ our $pdl_version       = version->parse($PDL::VERSION);
 our $propagate_badflag = $pdl_version >= '2.008' ? "propagate_badflag" : "propogate_badflag";
 
 ##-- floating-point types
-## PDL v2.082 doesn't like LD here
+## PDL v2.082 doesn't like LD here (so we use 'E' instead)
 ##  - t/03_baum.t crashes at line 115 with `PP INTERNAL ERROR in logadd: unhandled datatype(11)`
-my $FLOAT_TYPES = [qw(F D)]; #LD
+my $FLOAT_TYPES = [qw(F D E)];
 
 ##------------------------------------------------------
 ## pm additions
