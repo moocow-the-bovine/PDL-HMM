@@ -186,7 +186,8 @@ EOPM
 ##------------------------------------------------------
 ## logzero(): near approximation of log(0)
 pp_def('logzero',
-       Pars => 'float+ [o]a()',
+       Pars => '[o]a()',
+       GenericTypes => $FLOAT_TYPES,
        Code => '$a() = LOG_ZERO;',
        CopyBadStatusCode =>
 	  (" if ( \$ISPDLSTATEBAD(a) ) PDL->${propagate_badflag}(a,0);"
@@ -1047,7 +1048,8 @@ to do:
 ## Sequence Analysis: Backtrace
 pp_def
 ('hmmpath',
- Pars => q(float+ psi(N,T); indx qfinal(); indx [o]path(T)),
+ Pars => q(psi(N,T); indx qfinal(); indx [o]path(T)),
+ GenericTypes => $FLOAT_TYPES,
  Code =>
 ('
  /*-- Initialize: t==T-1: state_(t)==final() --*/
@@ -1085,7 +1087,8 @@ but also tends to be quite convenient.
 ## Sequence Analysis: Backtrace (constrained)
 pp_def
 ('hmmpathq',
- Pars => q(indx oq(Q,T); float+ psiq(Q,T); indx qfinalq(); indx [o]path(T)),
+ Pars => q(indx oq(Q,T); psiq(Q,T); indx qfinalq(); indx [o]path(T)),
+ GenericTypes => $FLOAT_TYPES,
  Code =>
 ('
  /*-- Initialize: t==T-1: state_(t)==final() --*/
