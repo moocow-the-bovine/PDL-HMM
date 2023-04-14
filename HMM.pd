@@ -622,17 +622,17 @@ pp_def
 ('hmmexpect',
  GenericTypes => $FLOAT_TYPES,
  Pars => join(" ",
-	      qw(a(N,N);
-		 b(N,M);
-		 pi(N);
-		 omega(N);
-		 o(T);
-		 alpha(N,T);
-		 beta(N,T);),
-	      qw([o]ea(N,N);
-		 [o]eb(N,M);
-		 [o]epi(N);
-		 [o]eomega(N);)),
+              qw(a(N,N);
+                 b(N,M);
+                 pi(N);
+                 omega(N);
+                 o(T);
+                 alpha(N,T);
+                 beta(N,T);),
+              qw([o]ea(N,N);
+                 [o]eb(N,M);
+                 [o]epi(N);
+                 [o]eomega(N);)),
  Code =>
 ('
  int i,j,t;
@@ -697,18 +697,18 @@ pp_def
 ('hmmexpectq',
  GenericTypes => $FLOAT_TYPES,
  Pars => join(" ",
-	      qw(a(N,N);
-		 b(N,M);
-		 pi(N);
-		 omega(N);),
-	      qw(o(T);
-		 oq(Q,T);),
-	      qw(alphaq(Q,T);
-		 betaq(Q,T);),
-	      qw([o]ea(N,N);
-		 [o]eb(N,M);
-		 [o]epi(N);
-		 [o]eomega(N);)),
+              qw(a(N,N);
+                 b(N,M);
+                 pi(N);
+                 omega(N);),
+              qw(o(T);
+                 oq(Q,T);),
+              qw(alphaq(Q,T);
+                 betaq(Q,T);),
+              qw([o]ea(N,N);
+                 [o]eb(N,M);
+                 [o]epi(N);
+                 [o]eomega(N);)),
  Code =>
 ('
  int i,j,t, qi,qj;
@@ -841,13 +841,13 @@ EOPM
 pp_def
 ('hmmviterbi',
  Pars => join(" ",
-	      qw(a(N,N);
-             b(N,M);
-		 pi(N);),
-	      #qw(omega(N);),
-	      qw(o(T);
-		   [o]delta(N,T);),
-	      'int [o]psi(N,T)'),
+              qw(a(N,N);
+                 b(N,M);
+                 pi(N);),
+              #qw(omega(N);),
+              qw(o(T);
+                 [o]delta(N,T);),
+              'int [o]psi(N,T)'),
  GenericTypes => $FLOAT_TYPES,
  Code =>
 ('
@@ -950,14 +950,14 @@ pp_def
 ('hmmviterbiq',
  GenericTypes => $FLOAT_TYPES,
  Pars => join(" ",
-	      qw(a(N,N);
-		 b(N,M);
-		 pi(N);),
-	      qw(o(T);
-		 oq(Q,T);),
-	      '[o]deltaq(Q,T);',
-	      'int [o]psiq(Q,T)',
-	      ),
+              qw(a(N,N);
+                 b(N,M);
+                 pi(N);),
+              qw(o(T);
+                 oq(Q,T);),
+              '[o]deltaq(Q,T);',
+              'indx [o]psiq(Q,T)',
+             ),
  Code =>
 ('
  int qi,qj, i,j, t, o_t;
@@ -1045,7 +1045,7 @@ to do:
 ## Sequence Analysis: Backtrace
 pp_def
 ('hmmpath',
- Pars => q(float+ psi(N,T); int qfinal(); int [o]path(T)),
+ Pars => q(float+ psi(N,T); indx qfinal(); indx [o]path(T)),
  Code =>
 ('
  /*-- Initialize: t==T-1: state_(t)==final() --*/
@@ -1083,7 +1083,7 @@ but also tends to be quite convenient.
 ## Sequence Analysis: Backtrace (constrained)
 pp_def
 ('hmmpathq',
- Pars => q(int oq(Q,T); float+ psiq(Q,T); int qfinalq(); int [o]path(T)),
+ Pars => q(indx oq(Q,T); float+ psiq(Q,T); indx qfinalq(); indx [o]path(T)),
  Code =>
 ('
  /*-- Initialize: t==T-1: state_(t)==final() --*/
