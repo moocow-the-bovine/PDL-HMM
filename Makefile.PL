@@ -8,7 +8,7 @@ $package  = ["HMM.pd",HMM,PDL::HMM];
 %hash = pdlmaker_init($package);
 
 my %prereq = (
-              PDL => '2.082',
+              PDL => '2.081',
               'Test::More'=>0,
              );
 
