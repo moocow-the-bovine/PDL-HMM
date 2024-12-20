@@ -25,4 +25,21 @@ $hash{VERSION_FROM} = 'HMM.pd';
 ##
 $hash{realclean}{FILES} .= ' *~ *.tmp README.txt';
 
+my $package_name = $package->[2];
+(my $repo = $package_name) =~ s#::#-#g;
+$repo = "moocow-the-bovine/$repo";
+$hash{META_MERGE} = {
+  "meta-spec" => { version => 2 },
+  resources => {
+    homepage => 'http://pdl.perl.org/',
+    bugtracker  => {web=>"https://github.com/$repo/issues"},
+    repository  => {
+      url => "git://github.com/$repo.git",
+      type => 'git',
+      web => "https://github.com/$repo",
+    },
+    x_IRC => 'irc://irc.perl.org/#pdl',
+  },
+};
+
 WriteMakefile(%hash);
